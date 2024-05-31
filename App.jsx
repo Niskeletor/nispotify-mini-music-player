@@ -1,4 +1,12 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Soundwave } from "react-bootstrap-icons";
+
+import ExtraControls from "./src/components/ExtraControls";
+import PlayerControls from "./src/components/PlayerControls";
+import Progress from "./src/components/Progress";
+import SongDetails from "./src/components/SongDetails";
+import Volume from "./src/components/Volume";
+
 
 const songs = [
     {
@@ -32,11 +40,53 @@ const songs = [
 ];
 
 function App() {
+
+    const audioRef = useRef();
+    const [playlist, setPlaylist] = useState(songs);
+    const [currentSongIndex, setCurrentSongIndex] = useState(0);
+    const [progress, setProgress] = useState(0);
+    const [dragging, setDragging] = useState(false);
+    const [timeElapsed, setTimeElapsed] = useState(0);
+    const [songLength, setSongLength] = useState(0);
+    const [songFinished, setSongFinished] = useState(false);
+    const [repeat, setRepeat] = useState(false);
+
+    const setTimeUpdate = () => {
+        const audio = audioRef.current;
+        const currentTime = audio.currentTime;
+        const progress = currentTime
+            ? Number(((currentTime * 100) / audio.duration).toFixed(1))
+            : 0;
+        setTimeElapsed(currentTime);
+        !dragging && setProgress(progress);
+    };
+
+    const setLoadedData = async () => {
+        const audio = audioRef.current;
+        setTimeElapsed(audio.currentTime);
+        setSongLength(audio.duration);
+    };
+
+    useEffect(() => {
+        if (songFinished) {
+            if (!repeat) next();
+            setSongFinished(false);
+        }
+    }, [songFinished]);
+
     return (
-        <>
-        <p>Hello</p>
-        </>
-    )
+        <div className="app">
+            <audio
+                src={playlist[currentSongIndex].src}
+                ref={audioRef}
+                onTimeUpdate={setTimeUpdate}
+                onLoadedData={setLoadedData}
+                onEnded={() => setSongFinished(true)}
+                loop={repeat}
+                crossOrigin="anonymous"
+            ></audio>
+        </div>
+    );
 }
 
 export default App;
